@@ -1467,7 +1467,8 @@ parts:
       - lib/python3/dist-packages/pyuefivars*
 
   lxd:
-    source: https://github.com/canonical/lxd
+    source: https://github.com/xypron/lxd
+    source-commit: e4ac6d5125ad0ce3daee16c6a85783d389507ea8
     source-depth: 0
     source-type: git
     after:
