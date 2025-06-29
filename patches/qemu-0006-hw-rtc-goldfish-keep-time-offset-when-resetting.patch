@@ -1,0 +1,70 @@
+From 090fe89448c388d9dcd5c3cdc191f6229113708c Mon Sep 17 00:00:00 2001
+From: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+Date: Fri, 21 Mar 2025 23:12:48 +0100
+Subject: [PATCH 6/6] hw/rtc/goldfish: keep time offset when resetting
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Currently resetting the leads to resynchronizing the Goldfish RTC
+with the system clock of the host. In real hardware an RTC reset
+would not change the wall time. Other RTCs like pl031 do not show
+this behavior.
+
+Move the synchronization of the RTC with the system clock to the
+instance realization.
+
+Cc: qemu-stable@nongnu.org
+Reported-by: Frederik Du Toit Lotter <fred.lotter@canonical.com>
+Fixes: 9a5b40b8427 ("hw: rtc: Add Goldfish RTC device")
+Signed-off-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+Reviewed-by: Philippe Mathieu-Daudé <philmd@linaro.org>
+Message-ID: <20250321221248.17764-1-heinrich.schuchardt@canonical.com>
+Signed-off-by: Philippe Mathieu-Daudé <philmd@linaro.org>
+---
+ hw/rtc/goldfish_rtc.c | 13 ++++++-------
+ 1 file changed, 6 insertions(+), 7 deletions(-)
+
+diff --git a/hw/rtc/goldfish_rtc.c b/hw/rtc/goldfish_rtc.c
+index 19a56402a0..c1fea4e653 100644
+--- a/hw/rtc/goldfish_rtc.c
++++ b/hw/rtc/goldfish_rtc.c
+@@ -256,15 +256,8 @@ static const VMStateDescription goldfish_rtc_vmstate = {
+ static void goldfish_rtc_reset(DeviceState *dev)
+ {
+     GoldfishRTCState *s = GOLDFISH_RTC(dev);
+-    struct tm tm;
+ 
+     timer_del(s->timer);
+-
+-    qemu_get_timedate(&tm, 0);
+-    s->tick_offset = mktimegm(&tm);
+-    s->tick_offset *= NANOSECONDS_PER_SECOND;
+-    s->tick_offset -= qemu_clock_get_ns(rtc_clock);
+-    s->tick_offset_vmstate = 0;
+     s->alarm_next = 0;
+     s->alarm_running = 0;
+     s->irq_pending = 0;
+@@ -275,6 +268,7 @@ static void goldfish_rtc_realize(DeviceState *d, Error **errp)
+ {
+     SysBusDevice *dev = SYS_BUS_DEVICE(d);
+     GoldfishRTCState *s = GOLDFISH_RTC(d);
++    struct tm tm;
+ 
+     memory_region_init_io(&s->iomem, OBJECT(s),
+                           &goldfish_rtc_ops[s->big_endian], s,
+@@ -284,6 +278,11 @@ static void goldfish_rtc_realize(DeviceState *d, Error **errp)
+     sysbus_init_irq(dev, &s->irq);
+ 
+     s->timer = timer_new_ns(rtc_clock, goldfish_rtc_interrupt, s);
++
++    qemu_get_timedate(&tm, 0);
++    s->tick_offset = mktimegm(&tm);
++    s->tick_offset *= NANOSECONDS_PER_SECOND;
++    s->tick_offset -= qemu_clock_get_ns(rtc_clock);
+ }
+ 
+ static Property goldfish_rtc_properties[] = {
+-- 
+2.48.1
+

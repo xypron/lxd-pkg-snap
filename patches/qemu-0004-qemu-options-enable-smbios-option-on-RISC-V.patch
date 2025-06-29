@@ -1,0 +1,34 @@
+From 9b103991220ca319abcfcc22337b6b0d8c3a96c9 Mon Sep 17 00:00:00 2001
+From: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+Date: Tue, 23 Jan 2024 19:42:29 +0100
+Subject: [PATCH 4/6] qemu-options: enable -smbios option on RISC-V
+
+With SMBIOS support added for RISC-V we also should enable the command line
+option.
+
+Signed-off-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+Reviewed-by: Daniel Henrique Barboza <dbarboza@ventanamicro.com>
+Acked-by: Alistair Francis <alistair.francis@wdc.com>
+Reviewed-by: Andrew Jones <ajones@ventanamicro.com>
+Message-ID: <20240123184229.10415-5-heinrich.schuchardt@canonical.com>
+Signed-off-by: Alistair Francis <alistair.francis@wdc.com>
+---
+ qemu-options.hx | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/qemu-options.hx b/qemu-options.hx
+index 4b86e38c58..607990b009 100644
+--- a/qemu-options.hx
++++ b/qemu-options.hx
+@@ -2690,7 +2690,7 @@ DEF("smbios", HAS_ARG, QEMU_OPTION_smbios,
+     "                specify SMBIOS type 17 fields\n"
+     "-smbios type=41[,designation=str][,kind=str][,instance=%d][,pcidev=str]\n"
+     "                specify SMBIOS type 41 fields\n",
+-    QEMU_ARCH_I386 | QEMU_ARCH_ARM | QEMU_ARCH_LOONGARCH)
++    QEMU_ARCH_I386 | QEMU_ARCH_ARM | QEMU_ARCH_LOONGARCH | QEMU_ARCH_RISCV)
+ SRST
+ ``-smbios file=binary``
+     Load SMBIOS entry from binary file.
+-- 
+2.48.1
+

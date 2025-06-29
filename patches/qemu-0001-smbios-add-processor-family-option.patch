@@ -1,0 +1,108 @@
+From beeed3250d5cd478bb6012661f5562108a4a059a Mon Sep 17 00:00:00 2001
+From: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+Date: Tue, 23 Jan 2024 19:42:26 +0100
+Subject: [PATCH 1/6] smbios: add processor-family option
+
+For RISC-V the SMBIOS standard requires specific values of the processor
+family value depending on the bitness of the CPU.
+
+Add a processor-family option for SMBIOS table 4.
+
+The value of processor-family may exceed 255 and therefore must be provided
+in the Processor Family 2 field. Set the Processor Family field to 0xFE
+which signals that the Processor Family 2 is used.
+
+Signed-off-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+Reviewed-by: Alistair Francis <alistair.francis@wdc.com>
+Reviewed-by: Andrew Jones <ajones@ventanamicro.com>
+Message-ID: <20240123184229.10415-2-heinrich.schuchardt@canonical.com>
+Signed-off-by: Alistair Francis <alistair.francis@wdc.com>
+---
+ hw/smbios/smbios.c | 13 +++++++++++--
+ qemu-options.hx    |  4 ++--
+ 2 files changed, 13 insertions(+), 4 deletions(-)
+
+diff --git a/hw/smbios/smbios.c b/hw/smbios/smbios.c
+index 8a44d3f271..232f3bdde2 100644
+--- a/hw/smbios/smbios.c
++++ b/hw/smbios/smbios.c
+@@ -102,6 +102,7 @@ static struct {
+ #define DEFAULT_CPU_SPEED 2000
+ 
+ static struct {
++    uint16_t processor_family;
+     const char *sock_pfx, *manufacturer, *version, *serial, *asset, *part;
+     uint64_t max_speed;
+     uint64_t current_speed;
+@@ -110,6 +111,7 @@ static struct {
+     .max_speed = DEFAULT_CPU_SPEED,
+     .current_speed = DEFAULT_CPU_SPEED,
+     .processor_id = 0,
++    .processor_family = 0x01, /* Other */
+ };
+ 
+ struct type8_instance {
+@@ -337,6 +339,10 @@ static const QemuOptDesc qemu_smbios_type4_opts[] = {
+         .name = "part",
+         .type = QEMU_OPT_STRING,
+         .help = "part number",
++    }, {
++        .name = "processor-family",
++        .type = QEMU_OPT_NUMBER,
++        .help = "processor family",
+     }, {
+         .name = "processor-id",
+         .type = QEMU_OPT_NUMBER,
+@@ -738,7 +744,7 @@ static void smbios_build_type_4_table(MachineState *ms, unsigned instance)
+     snprintf(sock_str, sizeof(sock_str), "%s%2x", type4.sock_pfx, instance);
+     SMBIOS_TABLE_SET_STR(4, socket_designation_str, sock_str);
+     t->processor_type = 0x03; /* CPU */
+-    t->processor_family = 0x01; /* Other */
++    t->processor_family = 0xfe; /* use Processor Family 2 field */
+     SMBIOS_TABLE_SET_STR(4, processor_manufacturer_str, type4.manufacturer);
+     if (type4.processor_id == 0) {
+         t->processor_id[0] = cpu_to_le32(smbios_cpuid_version);
+@@ -770,7 +776,7 @@ static void smbios_build_type_4_table(MachineState *ms, unsigned instance)
+     t->thread_count = (threads_per_socket > 255) ? 0xFF : threads_per_socket;
+ 
+     t->processor_characteristics = cpu_to_le16(0x02); /* Unknown */
+-    t->processor_family2 = cpu_to_le16(0x01); /* Other */
++    t->processor_family2 = cpu_to_le16(type4.processor_family);
+ 
+     if (tbl_len == SMBIOS_TYPE_4_LEN_V30) {
+         t->core_count2 = t->core_enabled2 = cpu_to_le16(cores_per_socket);
+@@ -1414,6 +1420,9 @@ void smbios_entry_add(QemuOpts *opts, Error **errp)
+                 return;
+             }
+             save_opt(&type4.sock_pfx, opts, "sock_pfx");
++            type4.processor_family = qemu_opt_get_number(opts,
++                                                         "processor-family",
++                                                         0x01 /* Other */);
+             save_opt(&type4.manufacturer, opts, "manufacturer");
+             save_opt(&type4.version, opts, "version");
+             save_opt(&type4.serial, opts, "serial");
+diff --git a/qemu-options.hx b/qemu-options.hx
+index b6b4ad9e67..4b86e38c58 100644
+--- a/qemu-options.hx
++++ b/qemu-options.hx
+@@ -2679,7 +2679,7 @@ DEF("smbios", HAS_ARG, QEMU_OPTION_smbios,
+     "                specify SMBIOS type 3 fields\n"
+     "-smbios type=4[,sock_pfx=str][,manufacturer=str][,version=str][,serial=str]\n"
+     "              [,asset=str][,part=str][,max-speed=%d][,current-speed=%d]\n"
+-    "              [,processor-id=%d]\n"
++    "              [,processor-family=%d,processor-id=%d]\n"
+     "                specify SMBIOS type 4 fields\n"
+     "-smbios type=8[,external_reference=str][,internal_reference=str][,connector_type=%d][,port_type=%d]\n"
+     "                specify SMBIOS type 8 fields\n"
+@@ -2707,7 +2707,7 @@ SRST
+ ``-smbios type=3[,manufacturer=str][,version=str][,serial=str][,asset=str][,sku=str]``
+     Specify SMBIOS type 3 fields
+ 
+-``-smbios type=4[,sock_pfx=str][,manufacturer=str][,version=str][,serial=str][,asset=str][,part=str][,processor-id=%d]``
++``-smbios type=4[,sock_pfx=str][,manufacturer=str][,version=str][,serial=str][,asset=str][,part=str][,processor-family=%d][,processor-id=%d]``
+     Specify SMBIOS type 4 fields
+ 
+ ``-smbios type=11[,value=str][,path=filename]``
+-- 
+2.48.1
+

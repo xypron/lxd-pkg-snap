@@ -1,0 +1,49 @@
+From c44c889ebb0dc1a96ab653545eed660779626f62 Mon Sep 17 00:00:00 2001
+From: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+Date: Tue, 23 Jan 2024 19:42:27 +0100
+Subject: [PATCH 2/6] smbios: function to set default processor family
+
+Provide a function to set the default processor family.
+
+Signed-off-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+Reviewed-by: Andrew Jones <ajones@ventanamicro.com>
+Message-ID: <20240123184229.10415-3-heinrich.schuchardt@canonical.com>
+Signed-off-by: Alistair Francis <alistair.francis@wdc.com>
+---
+ hw/smbios/smbios.c           | 7 +++++++
+ include/hw/firmware/smbios.h | 1 +
+ 2 files changed, 8 insertions(+)
+
+diff --git a/hw/smbios/smbios.c b/hw/smbios/smbios.c
+index 232f3bdde2..a3c4e52ce9 100644
+--- a/hw/smbios/smbios.c
++++ b/hw/smbios/smbios.c
+@@ -1001,6 +1001,13 @@ void smbios_set_cpuid(uint32_t version, uint32_t features)
+         field = value;                                                    \
+     }
+ 
++void smbios_set_default_processor_family(uint16_t processor_family)
++{
++    if (type4.processor_family <= 0x01) {
++        type4.processor_family = processor_family;
++    }
++}
++
+ void smbios_set_defaults(const char *manufacturer, const char *product,
+                          const char *version, bool legacy_mode,
+                          bool uuid_encoded, SmbiosEntryPointType ep_type)
+diff --git a/include/hw/firmware/smbios.h b/include/hw/firmware/smbios.h
+index 7f3259a630..6e514982d4 100644
+--- a/include/hw/firmware/smbios.h
++++ b/include/hw/firmware/smbios.h
+@@ -295,6 +295,7 @@ void smbios_set_cpuid(uint32_t version, uint32_t features);
+ void smbios_set_defaults(const char *manufacturer, const char *product,
+                          const char *version, bool legacy_mode,
+                          bool uuid_encoded, SmbiosEntryPointType ep_type);
++void smbios_set_default_processor_family(uint16_t processor_family);
+ uint8_t *smbios_get_table_legacy(MachineState *ms, size_t *length);
+ void smbios_get_tables(MachineState *ms,
+                        const struct smbios_phys_mem_area *mem_array,
+-- 
+2.48.1
+

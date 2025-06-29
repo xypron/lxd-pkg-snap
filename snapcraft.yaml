@@ -955,6 +955,14 @@ parts:
       # This is backported from QEMU v9.2.2.
       patch -p1 < "${CRAFT_PROJECT_DIR}/patches/qemu-0001-kvm-Allow-kvm_arch_get-put_registers-to-accept-Error.patch"
       patch -p1 < "${CRAFT_PROJECT_DIR}/patches/qemu-0002-target-i386-kvm-Report-which-action-failed-in-kvm_ar.patch"
+      # Enable SMBIOS support on RISC-V v.9.1.0
+      patch -p1 < "${CRAFT_PROJECT_DIR}/patches/qemu-0001-smbios-add-processor-family-option.patch"
+      patch -p1 < "${CRAFT_PROJECT_DIR}/patches/qemu-0002-smbios-function-to-set-default-processor-family.patch"
+      patch -p1 < "${CRAFT_PROJECT_DIR}/patches/qemu-0003-target-riscv-SMBIOS-support-for-RISC-V-virt-machine.patch"
+      patch -p1 < "${CRAFT_PROJECT_DIR}/patches/qemu-0004-qemu-options-enable-smbios-option-on-RISC-V.patch"
+      patch -p1 < "${CRAFT_PROJECT_DIR}/patches/qemu-0005-qemu-options.hx-correct-formatting-smbios-type-4.patch"
+      # Correct RTC clock on RISC-V, backported from v10.0.0
+      patch -p1 < "${CRAFT_PROJECT_DIR}/patches/qemu-0006-hw-rtc-goldfish-keep-time-offset-when-resetting.patch"
 
       sed -i "s/^unset target_list$/target_list=\"${QEMUARCH}-softmmu\"/" configure
       sed -i 's#libseccomp_minver=".*#libseccomp_minver="0.0"#g' configure
